@@ -13,8 +13,8 @@
 /** Source object for filtering movies
  */
 @interface GPUImageMovie : GPUImageOutput
-
-@property (readwrite, retain) AVAsset *asset;
+@property(assign, nonatomic)CMTimeRange timeRange;
+@property (readwrite, strong) AVAsset *asset;
 @property(readwrite, retain) NSURL *url;
 
 /** This enables the benchmarking mode, which logs out instantaneous and average frame times to the console
