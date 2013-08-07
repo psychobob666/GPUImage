@@ -150,7 +150,7 @@
   // Maybe set alwaysCopiesSampleData to NO on iOS 5.0 for faster video decoding
   AVAssetReaderTrackOutput *readerVideoTrackOutput = [AVAssetReaderTrackOutput assetReaderTrackOutputWithTrack:[[self.asset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0] outputSettings:outputSettings];
   [reader addOutput:readerVideoTrackOutput];
-  readerVideoTrackOutput.alwaysCopiesSampleData=NO;
+  //readerVideoTrackOutput.alwaysCopiesSampleData=NO;
   NSArray *audioTracks = [self.asset tracksWithMediaType:AVMediaTypeAudio];
   BOOL shouldRecordAudioTrack = (([audioTracks count] > 0) && (weakSelf.audioEncodingTarget != nil) );
   AVAssetReaderTrackOutput *readerAudioTrackOutput = nil;
@@ -230,7 +230,7 @@
     //return;
    // NSAutoreleasePool *pool = [NSAutoreleasePool new];
     //NSLog(@"videoTrack %@ reader %@", readerVideoTrackOutput, reader);
-    @autoreleasepool {
+    //@autoreleasepool {
     CMSampleBufferRef sampleBufferRef = [readerVideoTrackOutput copyNextSampleBuffer];
     //NSLog(@"samplebuffer readed");
     if (sampleBufferRef)
@@ -269,7 +269,7 @@
         [self endProcessing];
       }
     }
-  }
+  //}
   }
   else if (synchronizedMovieWriter != nil)
   {

@@ -22,7 +22,7 @@
     [super viewDidLoad];
   
     NSURL *sampleURL = [[NSBundle mainBundle] URLForResource:@"sample_iPod" withExtension:@"m4v"];
-    
+  reportAvailableMemoryForGPUImage(@"Default");
     movieFile = [[GPUImageMovie alloc] initWithURL:sampleURL];
     movieFile.runBenchmark = YES;
     movieFile.playAtActualSpeed = NO;
@@ -47,7 +47,7 @@
     movieWriter.shouldPassthroughAudio = YES;
     movieFile.audioEncodingTarget = movieWriter;
     [movieFile enableSynchronizedEncodingUsingMovieWriter:movieWriter];
-    
+  NSLog(@"start");
     [movieWriter startRecording];
     [movieFile startProcessing];
     

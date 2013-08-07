@@ -32,6 +32,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     CMTime startTime, previousFrameTime;
     
     BOOL isRecording;
+  dispatch_semaphore_t sema;
 }
 
 // Movie recording
@@ -74,7 +75,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     {
 		return nil;
     }
-
+    sema = dispatch_semaphore_create(0);
     _shouldInvalidateAudioSampleWhenDone = NO;
     
     self.enabled = YES;
@@ -151,6 +152,8 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
         dispatch_release(movieWritingQueue);
     }
 #endif
+  dispatch_release(sema);
+  [assetWriterVideoInput removeObserver:self forKeyPath:@"readyForMoreMediaData"];
 }
 
 #pragma mark -
@@ -161,7 +164,8 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     isRecording = NO;
     
     self.enabled = YES;
-    frameData = (GLubyte *) malloc((int)videoSize.width * (int)videoSize.height * 4);
+  frameData=NULL;
+    //frameData = (GLubyte *) malloc((int)videoSize.width * (int)videoSize.height * 4);
 
 //    frameData = (GLubyte *) calloc(videoSize.width * videoSize.height * 4, sizeof(GLubyte));
     NSError *error = nil;
@@ -183,7 +187,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     }
     
     // Set this to make sure that a functional movie is produced, even if the recording is cut off mid-stream. Only the last second should be lost in that case.
-    assetWriter.movieFragmentInterval = CMTimeMakeWithSeconds(1.0, 1000);
+  assetWriter.movieFragmentInterval = CMTimeMake(1,1);//CMTimeMakeWithSeconds(1, 1);
     
     // use default output settings if none specified
     if (outputSettings == nil) 
@@ -215,20 +219,23 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
                                               [NSNumber numberWithInt:3], AVVideoPixelAspectRatioHorizontalSpacingKey,
                                               [NSNumber numberWithInt:3], AVVideoPixelAspectRatioVerticalSpacingKey,
                                               nil];
+     
+     */
 
     NSMutableDictionary * compressionProperties = [[NSMutableDictionary alloc] init];
-    [compressionProperties setObject:videoCleanApertureSettings forKey:AVVideoCleanApertureKey];
-    [compressionProperties setObject:videoAspectRatioSettings forKey:AVVideoPixelAspectRatioKey];
-    [compressionProperties setObject:[NSNumber numberWithInt: 2000000] forKey:AVVideoAverageBitRateKey];
+    //[compressionProperties setObject:videoCleanApertureSettings forKey:AVVideoCleanApertureKey];
+    //[compressionProperties setObject:videoAspectRatioSettings forKey:AVVideoPixelAspectRatioKey];
+    [compressionProperties setObject:[NSNumber numberWithInt: (11.4*videoSize.width*videoSize.height)] forKey:AVVideoAverageBitRateKey];
     [compressionProperties setObject:[NSNumber numberWithInt: 16] forKey:AVVideoMaxKeyFrameIntervalKey];
-    [compressionProperties setObject:AVVideoProfileLevelH264Main31 forKey:AVVideoProfileLevelKey];
-    
+    //[compressionProperties setObject:AVVideoProfileLevelH264Main31 forKey:AVVideoProfileLevelKey];
     [outputSettings setObject:compressionProperties forKey:AVVideoCompressionPropertiesKey];
-    */
-     
+  
     assetWriterVideoInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:outputSettings];
     assetWriterVideoInput.expectsMediaDataInRealTime = _encodingLiveVideo;
-    
+  
+  
+  /*add key value observer*/
+  [assetWriterVideoInput addObserver:self forKeyPath:@"readyForMoreMediaData" options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
     // You need to use BGRA for the video in order to get realtime encoding. I use a color-swizzling shader to line up glReadPixels' normal RGBA output with the movie input's BGRA.
     NSDictionary *sourcePixelBufferAttributesDictionary = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
                                                            [NSNumber numberWithInt:videoSize.width], kCVPixelBufferWidthKey,
@@ -552,8 +559,14 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
 
     if (!assetWriterVideoInput.readyForMoreMediaData)
     {
+      if(!self.recordInRealtime){
+        NSLog(@"not ready for more media, waiting");
+        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+        NSLog(@"signal received");
+      }else{
         NSLog(@"Had to drop a video frame");
-        return;
+        return;        
+      }
     }
     
     // Render the frame with swizzled colors, so that they can be uploaded quickly as BGRA frames
@@ -730,6 +743,22 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
         // Remove audio track if it exists
     }
 }
-
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+   if ([keyPath isEqual:@"readyForMoreMediaData"]) {
+     NSLog(@"old value %@", [change objectForKey:NSKeyValueChangeOldKey]);
+     if([[change objectForKey:NSKeyValueChangeNewKey] boolValue] !=[[change objectForKey:NSKeyValueChangeOldKey] boolValue]){
+       if([[change objectForKey:NSKeyValueChangeNewKey] boolValue]){
+         if (!CMTIME_IS_INVALID(startTime)){
+           NSLog(@"seeding signal to semaphore");
+           dispatch_semaphore_signal(sema);
+         }
+       }
+       
+     }
+   }
+}
 
 @end

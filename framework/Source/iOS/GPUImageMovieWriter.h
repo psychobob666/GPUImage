@@ -47,6 +47,7 @@ extern NSString *const kGPUImageColorSwizzlingFragmentShaderString;
 @property(nonatomic, copy) void(^videoInputReadyCallback)(void);
 @property(nonatomic, copy) void(^audioInputReadyCallback)(void);
 @property(nonatomic) BOOL enabled;
+@property(nonatomic) BOOL recordInRealtime;
 
 // Initialization and teardown
 - (id)initWithMovieURL:(NSURL *)newMovieURL size:(CGSize)newSize;
