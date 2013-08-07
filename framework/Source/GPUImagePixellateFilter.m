@@ -144,7 +144,7 @@ NSString *const kGPUImagePixellationFragmentShaderString = SHADER_STRING
 - (void)setAspectRatio:(CGFloat)newValue;
 {
     _aspectRatio = newValue;
-
+  //[self setFloat:0 forUniformName:@""];
     [self setFloat:_aspectRatio forUniform:aspectRatioUniform program:filterProgram];
 }
 
