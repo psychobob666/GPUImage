@@ -32,7 +32,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     CMTime startTime, previousFrameTime;
     
     BOOL isRecording;
-  dispatch_semaphore_t sema;
+  //dispatch_semaphore_t sema;
 }
 
 // Movie recording
@@ -75,7 +75,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     {
 		return nil;
     }
-    sema = dispatch_semaphore_create(0);
+    //sema = dispatch_semaphore_create(0);
     _shouldInvalidateAudioSampleWhenDone = NO;
     
     self.enabled = YES;
@@ -152,8 +152,8 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
         dispatch_release(movieWritingQueue);
     }
 #endif
-  dispatch_release(sema);
-  [assetWriterVideoInput removeObserver:self forKeyPath:@"readyForMoreMediaData"];
+  //dispatch_release(sema);
+  //[assetWriterVideoInput removeObserver:self forKeyPath:@"readyForMoreMediaData"];
 }
 
 #pragma mark -
@@ -235,7 +235,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
   
   
   /*add key value observer*/
-  [assetWriterVideoInput addObserver:self forKeyPath:@"readyForMoreMediaData" options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
+  //[assetWriterVideoInput addObserver:self forKeyPath:@"readyForMoreMediaData" options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
     // You need to use BGRA for the video in order to get realtime encoding. I use a color-swizzling shader to line up glReadPixels' normal RGBA output with the movie input's BGRA.
     NSDictionary *sourcePixelBufferAttributesDictionary = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
                                                            [NSNumber numberWithInt:videoSize.width], kCVPixelBufferWidthKey,
@@ -561,7 +561,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     {
       if(!self.recordInRealtime){
         NSLog(@"not ready for more media, waiting");
-        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+        //dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
         NSLog(@"signal received");
       }else{
         NSLog(@"Had to drop a video frame");
@@ -753,7 +753,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
        if([[change objectForKey:NSKeyValueChangeNewKey] boolValue]){
          if (!CMTIME_IS_INVALID(startTime)){
            NSLog(@"seeding signal to semaphore");
-           dispatch_semaphore_signal(sema);
+           //dispatch_semaphore_signal(sema);
          }
        }
        
