@@ -243,6 +243,21 @@
             glDeleteRenderbuffers(1, &dataRenderbuffer);
             dataRenderbuffer = 0;
         }
+
+#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
+        if (rawDataTextureCache)
+        {
+            CVOpenGLESTextureCacheFlush(rawDataTextureCache, 0);
+            CFRelease(rawDataTextureCache);
+            rawDataTextureCache = 0;
+        }
+#endif
+        
+        if (renderTarget)
+        {
+            CVPixelBufferRelease(renderTarget);
+            renderTarget = 0;
+        }
     });
 }
 
